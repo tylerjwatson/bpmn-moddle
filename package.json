@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "min-dash": "^3.0.0",
-    "moddle": "file:../moddle",
-    "moddle-xml": "file:../moddle-xml"
+    "moddle": "github:tylerjwatson/moddle",
+    "moddle-xml": "github:tylerjwatson/moddle-xml"
   }
 }
