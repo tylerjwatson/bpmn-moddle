@@ -1,28 +1,42 @@
-import expect from './expect';
+'use strict';
 
-import SchemaValidator from 'xsd-schema-validator';
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.fromFile = fromFile;
+exports.fromFilePart = fromFilePart;
+exports.fromValidFile = fromValidFile;
+exports.toXML = toXML;
+exports.validate = validate;
 
-import {
-  readFile
-} from './helper';
+var _expect = require('./expect');
+
+var _expect2 = _interopRequireDefault(_expect);
+
+var _xsdSchemaValidator = require('xsd-schema-validator');
+
+var _xsdSchemaValidator2 = _interopRequireDefault(_xsdSchemaValidator);
+
+var _helper = require('./helper');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var BPMN_XSD = 'test/fixtures/xsd/BPMN20.xsd';
 
-
-export function fromFile(moddle, file, done) {
+function fromFile(moddle, file, done) {
   return fromFilePart(moddle, file, 'bpmn:Definitions', done);
 }
 
-export function fromFilePart(moddle, file, type, done) {
-  var fileContents = readFile(file);
+function fromFilePart(moddle, file, type, done) {
+  var fileContents = (0, _helper.readFile)(file);
 
   moddle.fromXML(fileContents, type, done);
 }
 
-export function fromValidFile(moddle, file, done) {
-  var fileContents = readFile(file);
+function fromValidFile(moddle, file, done) {
+  var fileContents = (0, _helper.readFile)(file);
 
-  validate(null, fileContents, function(err) {
+  validate(null, fileContents, function (err) {
 
     if (err) {
       return done(err);
@@ -32,13 +46,11 @@ export function fromValidFile(moddle, file, done) {
   });
 }
 
-
-export function toXML(element, opts, done) {
+function toXML(element, opts, done) {
   element.$model.toXML(element, opts, done);
 }
 
-
-export function validate(err, xml, done) {
+function validate(err, xml, done) {
 
   if (err) {
     return done(err);
@@ -48,13 +60,13 @@ export function validate(err, xml, done) {
     return done(new Error('XML is not defined'));
   }
 
-  SchemaValidator.validateXML(xml, BPMN_XSD, function(err, result) {
+  _xsdSchemaValidator2.default.validateXML(xml, BPMN_XSD, function (err, result) {
 
     if (err) {
       return done(err);
     }
 
-    expect(result.valid).to.be.true;
+    (0, _expect2.default)(result.valid).to.be.true;
     done();
   });
 }

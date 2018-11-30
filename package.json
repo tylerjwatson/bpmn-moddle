@@ -3,10 +3,11 @@
   "version": "5.1.5",
   "description": "A moddle wrapper for BPMN 2.0",
   "scripts": {
-    "all": "run-s lint test",
-    "lint": "eslint .",
-    "dev": "npm test -- --watch",
-    "test": "mocha -r esm --reporter=spec --recursive test"
+    "build": "babel -d . src",
+    "all": "run-s lint lib.commonjs/test",
+    "lint": "eslint src",
+    "dev": "npm lib.commonjs/test -- --watch",
+    "test": "mocha --reporter=spec --recursive lib.commonjs/test"
   },
   "repository": {
     "type": "git",
@@ -31,18 +32,18 @@
   "license": "MIT",
   "sideEffects": false,
   "devDependencies": {
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "chai": "^4.1.2",
     "cmof-parser": "^0.2.0",
     "eslint": "^4.11.0",
     "eslint-plugin-bpmn-io": "^0.4.1",
-    "esm": "^3.0.15",
     "mocha": "^4.0.1",
     "npm-run-all": "^4.1.2",
     "xsd-schema-validator": "^0.5.0"
   },
   "dependencies": {
     "min-dash": "^3.0.0",
-    "moddle": "^4.1.0",
-    "moddle-xml": "^7.2.3"
+    "moddle": "file:../moddle",
+    "moddle-xml": "file:../moddle-xml"
   }
 }

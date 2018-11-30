@@ -1,50 +1,44 @@
-import {
-  createModdle
-} from '../../helper';
+'use strict';
 
-import camundaPackage from '../../fixtures/json/model/camunda';
+var _helper = require('../../helper');
 
-import {
-  fromFile as parseFromFile,
-  toXML,
-  validate
-} from '../../xml-helper';
+var _camunda = require('../../fixtures/json/model/camunda');
 
+var _camunda2 = _interopRequireDefault(_camunda);
 
-describe('bpmn-moddle - integration', function() {
+var _xmlHelper = require('../../xml-helper');
 
-  describe('camunda extension', function() {
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-    var moddle = createModdle({ camunda: camundaPackage });
+describe('bpmn-moddle - integration', function () {
+
+  describe('camunda extension', function () {
+
+    var moddle = (0, _helper.createModdle)({ camunda: _camunda2.default });
 
     function fromFile(file, done) {
-      parseFromFile(moddle, file, done);
+      (0, _xmlHelper.fromFile)(moddle, file, done);
     }
 
-
-    describe('should serialize valid BPMN 2.0 after read', function() {
+    describe('should serialize valid BPMN 2.0 after read', function () {
 
       this.timeout(15000);
 
-
-      it('inputOutput', function(done) {
+      it('inputOutput', function (done) {
 
         // given
-        fromFile('test/fixtures/bpmn/extension/camunda/inputOutput.bpmn', function(err, result) {
+        fromFile('test/fixtures/bpmn/extension/camunda/inputOutput.bpmn', function (err, result) {
 
           if (err) {
             return done(err);
           }
 
           // when
-          toXML(result, { format: true }, function(err, xml) {
-            validate(err, xml, done);
+          (0, _xmlHelper.toXML)(result, { format: true }, function (err, xml) {
+            (0, _xmlHelper.validate)(err, xml, done);
           });
         });
       });
-
     });
-
   });
-
 });

@@ -1,582 +1,503 @@
-import Builder from './builder';
+'use strict';
 
+var _builder = require('./builder');
+
+var _builder2 = _interopRequireDefault(_builder);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function makeStringRef(desc) {
-  desc.type = 'String';
-  delete desc.isReference;
+        desc.type = 'String';
+        delete desc.isReference;
 }
 
+describe('moddle BPMN 2.0 json', function () {
 
-describe('moddle BPMN 2.0 json', function() {
+        describe('generate simple model', function () {
 
-  describe('generate simple model', function() {
+                it('transform BPMN20.cmof', function (done) {
 
-    it('transform BPMN20.cmof', function(done) {
+                        var builder = new _builder2.default();
 
-      var builder = new Builder();
+                        builder.parse('resources/bpmn/cmof/BPMN20.cmof', function (pkg, cmof) {
 
-      builder.parse('resources/bpmn/cmof/BPMN20.cmof', function(pkg, cmof) {
+                                builder.cleanIDs();
+                                builder.cleanAssociations();
 
-        builder.cleanIDs();
-        builder.cleanAssociations();
+                                // remove associations
+                                pkg.associations = [];
 
-        // remove associations
-        pkg.associations = [];
+                                pkg.xml = {
+                                        tagAlias: 'lowerCase',
+                                        typePrefix: 't'
+                                };
 
-        pkg.xml = {
-          tagAlias: 'lowerCase',
-          typePrefix: 't'
-        };
+                                builder.alter('BaseElement#id', {
+                                        isId: true
+                                });
 
-        builder.alter('BaseElement#id', {
-          isId: true
-        });
-
-        // perform a translation from
-        //
-        // BaseElement
-        //   - extensionValues = [ ExtensionAttributeValue#value = ... ]
-        //
-        // to
-        //
-        // BaseElement
-        //   - extensionElements: ExtensionElements#values = [ ... ]
-        //
-        builder.alter('ExtensionAttributeValue#value', {
-          name: 'values',
-          isMany: true
-        });
-
-        builder.alter('BaseElement#extensionValues', function(p) {
-          p.name = 'extensionElements';
-
-          delete p.isMany;
-        });
-
-        builder.rename('extensionAttributeValue', 'extensionElements');
-
-        builder.rename('extensionValues', 'extensionElements');
-
-        builder.rename('ExtensionAttributeValue', 'ExtensionElements');
-
-
-        // fix cryptic bpmn:Extension reference
-        builder.alter('Extension#definition', {
-          isAttr: true,
-          isReference: true
-        });
-
-
-        // fix documentation being first element
+                                // perform a translation from
+                                //
+                                // BaseElement
+                                //   - extensionValues = [ ExtensionAttributeValue#value = ... ]
+                                //
+                                // to
+                                //
+                                // BaseElement
+                                //   - extensionElements: ExtensionElements#values = [ ... ]
+                                //
+                                builder.alter('ExtensionAttributeValue#value', {
+                                        name: 'values',
+                                        isMany: true
+                                });
 
-        builder.alter('BaseElement', function(desc) {
-          builder.reorderProperties(desc, [ 'id', 'documentation' ]);
-        });
-
-        // fix definitions children order
-
-        builder.alter('Definitions', function(desc) {
-          builder.reorderProperties(desc, [
-            'rootElements',
-            'diagrams',
-            'relationships'
-          ]);
-        });
+                                builder.alter('BaseElement#extensionValues', function (p) {
+                                        p.name = 'extensionElements';
 
-        // fix ioSpec children order
-
-        builder.alter('InputOutputSpecification', function(desc) {
-          builder.reorderProperties(desc, [
-            'dataInputs',
-            'dataOutputs',
-            'inputSets',
-            'outputSets'
-          ]);
-        });
+                                        delete p.isMany;
+                                });
 
-        builder.alter('Relationship#sources', function(desc) {
-          desc.name = 'source';
-        });
+                                builder.rename('extensionAttributeValue', 'extensionElements');
 
-        builder.alter('Relationship#targets', function(desc) {
-          desc.name = 'target';
-        });
+                                builder.rename('extensionValues', 'extensionElements');
 
+                                builder.rename('ExtensionAttributeValue', 'ExtensionElements');
 
-        // fix event dataInput/dataOutput associations
+                                // fix cryptic bpmn:Extension reference
+                                builder.alter('Extension#definition', {
+                                        isAttr: true,
+                                        isReference: true
+                                });
 
-        builder.alter('CatchEvent#dataOutputAssociation', function(desc) {
-          desc.name = 'dataOutputAssociations';
-        });
+                                // fix documentation being first element
 
-        builder.alter('ThrowEvent#dataInputAssociation', function(desc) {
-          desc.name = 'dataInputAssociations';
-        });
+                                builder.alter('BaseElement', function (desc) {
+                                        builder.reorderProperties(desc, ['id', 'documentation']);
+                                });
 
-        // fix catchEvent children order
-
-        builder.alter('CatchEvent', function(desc) {
-          builder.reorderProperties(desc, [
-            'dataOutputs',
-            'dataOutputAssociations',
-            'outputSet',
-            'eventDefinitions',
-            'eventDefinitionRefs',
-          ]);
-        });
+                                // fix definitions children order
 
-        // fix throwEvent children order
-
-        builder.alter('ThrowEvent', function(desc) {
-          builder.reorderProperties(desc, [
-            'dataInputs',
-            'dataInputAssociations',
-            'inputSet',
-            'eventDefinitions',
-            'eventDefinitionRefs',
-          ]);
-        });
+                                builder.alter('Definitions', function (desc) {
+                                        builder.reorderProperties(desc, ['rootElements', 'diagrams', 'relationships']);
+                                });
 
-        // fix Collaboration child element order
-        builder.alter('Collaboration', function(desc) {
-
-          builder.reorderProperties(desc, [
-            'participants',
-            'messageFlows',
-            'artifacts',
-            'conversations',
-            'conversationAssociations',
-            'participantAssociations',
-            'messageFlowAssociations',
-            'correlationKeys',
-            'choreographyRef',
-            'conversationLinks'
-          ]);
-        });
+                                // fix ioSpec children order
 
-        // fix PotentialOwner#resourceRef
+                                builder.alter('InputOutputSpecification', function (desc) {
+                                        builder.reorderProperties(desc, ['dataInputs', 'dataOutputs', 'inputSets', 'outputSets']);
+                                });
 
-        builder.alter('ResourceRole#resourceRef', function(desc) {
-          delete desc.isAttr;
-        });
+                                builder.alter('Relationship#sources', function (desc) {
+                                        desc.name = 'source';
+                                });
 
-        // fix missing ResourceParameterBinding parent
+                                builder.alter('Relationship#targets', function (desc) {
+                                        desc.name = 'target';
+                                });
 
-        builder.alter('ResourceParameterBinding', function(desc) {
-          desc.superClass = [ 'BaseElement' ];
-        });
+                                // fix event dataInput/dataOutput associations
 
-        // fix missing ResourceAssignmentExpression parent
+                                builder.alter('CatchEvent#dataOutputAssociation', function (desc) {
+                                        desc.name = 'dataOutputAssociations';
+                                });
 
-        builder.alter('ResourceAssignmentExpression', function(desc) {
-          desc.superClass = [ 'BaseElement' ];
-        });
+                                builder.alter('ThrowEvent#dataInputAssociation', function (desc) {
+                                        desc.name = 'dataInputAssociations';
+                                });
 
-        // fix missing ParticipantMultiplicity parent
-        builder.alter('ParticipantMultiplicity', function(desc) {
-          desc.superClass = [ 'BaseElement' ];
-        });
+                                // fix catchEvent children order
 
-        // fix positioning of elements
+                                builder.alter('CatchEvent', function (desc) {
+                                        builder.reorderProperties(desc, ['dataOutputs', 'dataOutputAssociations', 'outputSet', 'eventDefinitions', 'eventDefinitionRefs']);
+                                });
 
-        builder.alter('FlowElementsContainer', function(desc) {
-          builder.swapProperties(desc, 'laneSets', 'flowElements');
-        });
+                                // fix throwEvent children order
 
-        builder.alter('FlowNode', function(desc) {
-          builder.swapProperties(desc, 'targetRef', 'sourceRef');
-          builder.swapProperties(desc, 'incoming', 'outgoing');
-        });
+                                builder.alter('ThrowEvent', function (desc) {
+                                        builder.reorderProperties(desc, ['dataInputs', 'dataInputAssociations', 'inputSet', 'eventDefinitions', 'eventDefinitionRefs']);
+                                });
 
-        builder.alter('DataAssociation', function(desc) {
-          builder.reorderProperties(desc, [
-            'sourceRef',
-            'targetRef',
-            'transformation'
-          ]);
-        });
+                                // fix Collaboration child element order
+                                builder.alter('Collaboration', function (desc) {
 
-        builder.alter('DataAssociation#transformation', function(desc) {
-          desc.xml = {
-            'serialize': 'property'
-          };
-        });
+                                        builder.reorderProperties(desc, ['participants', 'messageFlows', 'artifacts', 'conversations', 'conversationAssociations', 'participantAssociations', 'messageFlowAssociations', 'correlationKeys', 'choreographyRef', 'conversationLinks']);
+                                });
 
+                                // fix PotentialOwner#resourceRef
 
-        // fix Activity order serialization
-
-        builder.alter('Activity', function(desc) {
-          builder.reorderProperties(desc, [
-            'ioSpecification',
-            'properties',
-            'dataInputAssociations',
-            'dataOutputAssociations',
-            'resources',
-            'loopCharacteristics'
-          ]);
-        });
+                                builder.alter('ResourceRole#resourceRef', function (desc) {
+                                        delete desc.isAttr;
+                                });
 
+                                // fix missing ResourceParameterBinding parent
 
-        // fix *Refs -> Ref
+                                builder.alter('ResourceParameterBinding', function (desc) {
+                                        desc.superClass = ['BaseElement'];
+                                });
 
-        builder.alter('CallableElement#supportedInterfaceRefs', {
-          name: 'supportedInterfaceRef'
-        });
+                                // fix missing ResourceAssignmentExpression parent
 
-        builder.alter('Participant#interfaceRefs', {
-          name: 'interfaceRef'
-        });
+                                builder.alter('ResourceAssignmentExpression', function (desc) {
+                                        desc.superClass = ['BaseElement'];
+                                });
 
-        builder.alter('Operation#errorRefs', {
-          name: 'errorRef'
-        });
+                                // fix missing ParticipantMultiplicity parent
+                                builder.alter('ParticipantMultiplicity', function (desc) {
+                                        desc.superClass = ['BaseElement'];
+                                });
 
-        builder.alter('ThrowEvent#eventDefinitionRefs', {
-          name: 'eventDefinitionRef'
-        });
+                                // fix positioning of elements
 
-        builder.alter('CatchEvent#eventDefinitionRefs', {
-          name: 'eventDefinitionRef'
-        });
+                                builder.alter('FlowElementsContainer', function (desc) {
+                                        builder.swapProperties(desc, 'laneSets', 'flowElements');
+                                });
 
-        builder.alter('DataInput#inputSetRefs', {
-          name: 'inputSetRef'
-        });
+                                builder.alter('FlowNode', function (desc) {
+                                        builder.swapProperties(desc, 'targetRef', 'sourceRef');
+                                        builder.swapProperties(desc, 'incoming', 'outgoing');
+                                });
 
-        builder.alter('DataOutput#outputSetRefs', {
-          name: 'outputSetRef'
-        });
+                                builder.alter('DataAssociation', function (desc) {
+                                        builder.reorderProperties(desc, ['sourceRef', 'targetRef', 'transformation']);
+                                });
 
+                                builder.alter('DataAssociation#transformation', function (desc) {
+                                        desc.xml = {
+                                                'serialize': 'property'
+                                        };
+                                });
 
-        builder.alter('Process', function(desc) {
-
-          desc.properties.push({
-            'name': 'laneSets',
-            'type': 'LaneSet',
-            'isMany': true,
-            'replaces': 'FlowElementsContainer#laneSets'
-          });
-
-          desc.properties.push({
-            'name': 'flowElements',
-            'type': 'FlowElement',
-            'isMany': true,
-            'replaces': 'FlowElementsContainer#flowElements'
-          });
-
-          builder.reorderProperties(desc, [
-            'auditing',
-            'monitoring',
-            'properties',
-            'laneSets',
-            'flowElements',
-            'artifacts',
-            'resources',
-            'correlationSubscriptions',
-            'supports'
-          ]);
-        });
+                                // fix Activity order serialization
 
+                                builder.alter('Activity', function (desc) {
+                                        builder.reorderProperties(desc, ['ioSpecification', 'properties', 'dataInputAssociations', 'dataOutputAssociations', 'resources', 'loopCharacteristics']);
+                                });
 
-        builder.alter('SubProcess', function(desc) {
-          desc.superClass.push('InteractionNode');
-        });
+                                // fix *Refs -> Ref
 
-        builder.alter('Documentation#text', function(prop) {
-          prop.isBody = true;
-          delete prop.isAttr;
-        });
+                                builder.alter('CallableElement#supportedInterfaceRefs', {
+                                        name: 'supportedInterfaceRef'
+                                });
 
-        builder.alter('ScriptTask#script', function(desc) {
-          delete desc.isAttr;
-        });
+                                builder.alter('Participant#interfaceRefs', {
+                                        name: 'interfaceRef'
+                                });
 
-        builder.alter('TextAnnotation#text', function(desc) {
-          delete desc.isAttr;
-        });
+                                builder.alter('Operation#errorRefs', {
+                                        name: 'errorRef'
+                                });
 
-        builder.alter('Expression', {
-          isAbstract: true
-        });
+                                builder.alter('ThrowEvent#eventDefinitionRefs', {
+                                        name: 'eventDefinitionRef'
+                                });
 
-        // serialize Expression as xsi:type
-        pkg.types.forEach(function(t) {
-          (t.properties || []).forEach(function(p) {
-            if (p.type === 'Expression') {
-              p.xml = { serialize: 'xsi:type' };
-            }
-          });
-        });
+                                builder.alter('CatchEvent#eventDefinitionRefs', {
+                                        name: 'eventDefinitionRef'
+                                });
 
-        // fix StandardLoopCharacteristics#loopMaximum
+                                builder.alter('DataInput#inputSetRefs', {
+                                        name: 'inputSetRef'
+                                });
 
-        builder.alter('StandardLoopCharacteristics#loopMaximum', function(desc) {
-          desc.isAttr = true;
-          desc.type = 'Integer';
+                                builder.alter('DataOutput#outputSetRefs', {
+                                        name: 'outputSetRef'
+                                });
 
-          delete desc.xml;
-        });
+                                builder.alter('Process', function (desc) {
 
-        // fix MultiMultiInstanceLoopCharacteristics
+                                        desc.properties.push({
+                                                'name': 'laneSets',
+                                                'type': 'LaneSet',
+                                                'isMany': true,
+                                                'replaces': 'FlowElementsContainer#laneSets'
+                                        });
 
-        builder.alter('MultiInstanceLoopCharacteristics#loopDataInputRef', function(desc) {
-          delete desc.isAttr;
-        });
+                                        desc.properties.push({
+                                                'name': 'flowElements',
+                                                'type': 'FlowElement',
+                                                'isMany': true,
+                                                'replaces': 'FlowElementsContainer#flowElements'
+                                        });
 
-        builder.alter('MultiInstanceLoopCharacteristics#loopDataOutputRef', function(desc) {
-          delete desc.isAttr;
-        });
+                                        builder.reorderProperties(desc, ['auditing', 'monitoring', 'properties', 'laneSets', 'flowElements', 'artifacts', 'resources', 'correlationSubscriptions', 'supports']);
+                                });
 
-        builder.alter('MultiInstanceLoopCharacteristics#inputDataItem', function(desc) {
-          desc.xml = { serialize: 'property' };
-        });
+                                builder.alter('SubProcess', function (desc) {
+                                        desc.superClass.push('InteractionNode');
+                                });
 
-        builder.alter('MultiInstanceLoopCharacteristics#outputDataItem', function(desc) {
-          desc.xml = { serialize: 'property' };
-        });
+                                builder.alter('Documentation#text', function (prop) {
+                                        prop.isBody = true;
+                                        delete prop.isAttr;
+                                });
 
-        builder.alter('MultiInstanceLoopCharacteristics', function(desc) {
-          builder.reorderProperties(desc, [
-            'outputDataItem',
-            'complexBehaviorDefinition',
-            'completionCondition'
-          ]);
-        });
+                                builder.alter('ScriptTask#script', function (desc) {
+                                        delete desc.isAttr;
+                                });
 
+                                builder.alter('TextAnnotation#text', function (desc) {
+                                        delete desc.isAttr;
+                                });
 
-        // make some references strings rather than references
-        // (this way we are able to import it properly)
+                                builder.alter('Expression', {
+                                        isAbstract: true
+                                });
 
-        builder.alter('Operation#implementationRef', function(desc) {
-          desc.isAttr = true;
-          makeStringRef(desc);
-        });
+                                // serialize Expression as xsi:type
+                                pkg.types.forEach(function (t) {
+                                        (t.properties || []).forEach(function (p) {
+                                                if (p.type === 'Expression') {
+                                                        p.xml = { serialize: 'xsi:type' };
+                                                }
+                                        });
+                                });
 
-        builder.alter('Interface#implementationRef', function(desc) {
-          desc.isAttr = true;
-          makeStringRef(desc);
-        });
+                                // fix StandardLoopCharacteristics#loopMaximum
 
-        builder.alter('ItemDefinition#structureRef', function(desc) {
-          desc.isAttr = true;
-          makeStringRef(desc);
-        });
+                                builder.alter('StandardLoopCharacteristics#loopMaximum', function (desc) {
+                                        desc.isAttr = true;
+                                        desc.type = 'Integer';
 
-        builder.alter('CallActivity#calledElementRef', function(desc) {
-          desc.name = 'calledElement';
-          makeStringRef(desc);
-        });
+                                        delete desc.xml;
+                                });
 
-        builder.alter('Gateway#gatewayDirection', function(desc) {
-          desc.default = 'Unspecified';
-        });
+                                // fix MultiMultiInstanceLoopCharacteristics
 
-        builder.alter('CompensateEventDefinition#waitForCompletion', function(desc) {
-          desc.default = true;
-        });
+                                builder.alter('MultiInstanceLoopCharacteristics#loopDataInputRef', function (desc) {
+                                        delete desc.isAttr;
+                                });
+
+                                builder.alter('MultiInstanceLoopCharacteristics#loopDataOutputRef', function (desc) {
+                                        delete desc.isAttr;
+                                });
+
+                                builder.alter('MultiInstanceLoopCharacteristics#inputDataItem', function (desc) {
+                                        desc.xml = { serialize: 'property' };
+                                });
+
+                                builder.alter('MultiInstanceLoopCharacteristics#outputDataItem', function (desc) {
+                                        desc.xml = { serialize: 'property' };
+                                });
+
+                                builder.alter('MultiInstanceLoopCharacteristics', function (desc) {
+                                        builder.reorderProperties(desc, ['outputDataItem', 'complexBehaviorDefinition', 'completionCondition']);
+                                });
+
+                                // make some references strings rather than references
+                                // (this way we are able to import it properly)
+
+                                builder.alter('Operation#implementationRef', function (desc) {
+                                        desc.isAttr = true;
+                                        makeStringRef(desc);
+                                });
+
+                                builder.alter('Interface#implementationRef', function (desc) {
+                                        desc.isAttr = true;
+                                        makeStringRef(desc);
+                                });
+
+                                builder.alter('ItemDefinition#structureRef', function (desc) {
+                                        desc.isAttr = true;
+                                        makeStringRef(desc);
+                                });
+
+                                builder.alter('CallActivity#calledElementRef', function (desc) {
+                                        desc.name = 'calledElement';
+                                        makeStringRef(desc);
+                                });
 
-        builder.alter('EventBasedGateway#eventGatewayType', function(desc) {
-          desc.default = 'Exclusive';
-        });
+                                builder.alter('Gateway#gatewayDirection', function (desc) {
+                                        desc.default = 'Unspecified';
+                                });
 
-        builder.alter('CatchEvent#parallelMultiple', function(desc) {
-          desc.default = false;
-        });
+                                builder.alter('CompensateEventDefinition#waitForCompletion', function (desc) {
+                                        desc.default = true;
+                                });
 
-        builder.alter('ParticipantMultiplicity#minimum', function(desc) {
-          desc.default = 0;
-        });
+                                builder.alter('EventBasedGateway#eventGatewayType', function (desc) {
+                                        desc.default = 'Exclusive';
+                                });
 
-        builder.alter('ParticipantMultiplicity#maximum', function(desc) {
-          desc.default = 1;
-        });
+                                builder.alter('CatchEvent#parallelMultiple', function (desc) {
+                                        desc.default = false;
+                                });
 
-        builder.alter('Activity#startQuantity', function(desc) {
-          desc.default = 1;
-        });
+                                builder.alter('ParticipantMultiplicity#minimum', function (desc) {
+                                        desc.default = 0;
+                                });
 
-        builder.alter('Activity#completionQuantity', function(desc) {
-          desc.default = 1;
-        });
+                                builder.alter('ParticipantMultiplicity#maximum', function (desc) {
+                                        desc.default = 1;
+                                });
 
-        builder.alter('DataAssociation#targetRef', function(desc) {
-          delete desc.isAttr;
-        });
+                                builder.alter('Activity#startQuantity', function (desc) {
+                                        desc.default = 1;
+                                });
 
-        builder.alter('Lane#flowNodeRefs', {
-          name: 'flowNodeRef'
-        });
+                                builder.alter('Activity#completionQuantity', function (desc) {
+                                        desc.default = 1;
+                                });
 
-        builder.alter('Lane#childLaneSet', {
-          xml: { serialize: 'xsi:type' }
-        });
+                                builder.alter('DataAssociation#targetRef', function (desc) {
+                                        delete desc.isAttr;
+                                });
 
-        builder.alter('Lane', function(desc) {
-          builder.reorderProperties(desc, [
-            'partitionElement',
-            'flowNodeRef',
-            'childLaneSet'
-          ]);
-        });
+                                builder.alter('Lane#flowNodeRefs', {
+                                        name: 'flowNodeRef'
+                                });
 
-        builder.alter('Escalation', {
-          superClass: [ 'RootElement' ]
-        });
+                                builder.alter('Lane#childLaneSet', {
+                                        xml: { serialize: 'xsi:type' }
+                                });
 
-        builder.alter('Expression', function(desc) {
-          desc.isAbstract = false;
-          desc.properties = [
-            {
-              name: 'body',
-              type: 'String',
-              isBody: true
-            }
-          ];
-        });
+                                builder.alter('Lane', function (desc) {
+                                        builder.reorderProperties(desc, ['partitionElement', 'flowNodeRef', 'childLaneSet']);
+                                });
 
-        builder.alter('FormalExpression', function(desc) {
-          desc.properties = desc.properties.filter(function(p) {
-            return p.name !== 'body';
-          });
-        });
+                                builder.alter('Escalation', {
+                                        superClass: ['RootElement']
+                                });
 
-        builder.alter('CallableElement#ioSpecification', function(desc) {
-          desc.xml = { serialize: 'property' };
-        });
+                                builder.alter('Expression', function (desc) {
+                                        desc.isAbstract = false;
+                                        desc.properties = [{
+                                                name: 'body',
+                                                type: 'String',
+                                                isBody: true
+                                        }];
+                                });
+
+                                builder.alter('FormalExpression', function (desc) {
+                                        desc.properties = desc.properties.filter(function (p) {
+                                                return p.name !== 'body';
+                                        });
+                                });
+
+                                builder.alter('CallableElement#ioSpecification', function (desc) {
+                                        desc.xml = { serialize: 'property' };
+                                });
+
+                                builder.alter('CallableElement#ioBinding', function (desc) {
+                                        desc.xml = { serialize: 'property' };
+                                });
+
+                                builder.alter('Activity#ioSpecification', function (desc) {
+                                        desc.xml = { serialize: 'property' };
+                                });
+
+                                // fix Operation attributes issue
+                                builder.alter('Operation#inMessageRef', function (desc) {
+                                        delete desc.isAttr;
+                                });
+
+                                builder.alter('Operation#outMessageRef', function (desc) {
+                                        delete desc.isAttr;
+                                });
 
-        builder.alter('CallableElement#ioBinding', function(desc) {
-          desc.xml = { serialize: 'property' };
-        });
+                                builder.exportTo('resources/bpmn/json/bpmn.json');
+                        }, done);
+                });
 
-        builder.alter('Activity#ioSpecification', function(desc) {
-          desc.xml = { serialize: 'property' };
-        });
+                it('transform BPMNDI.cmof', function (done) {
 
-        // fix Operation attributes issue
-        builder.alter('Operation#inMessageRef', function(desc) {
-          delete desc.isAttr;
-        });
+                        var builder = new _builder2.default();
 
-        builder.alter('Operation#outMessageRef', function(desc) {
-          delete desc.isAttr;
-        });
+                        builder.parse('resources/bpmn/cmof/BPMNDI.cmof', function (pkg) {
 
-        builder.exportTo('resources/bpmn/json/bpmn.json');
-      }, done);
+                                builder.cleanIDs();
+                                builder.cleanAssociations();
 
-    });
+                                // remove associations
+                                pkg.associations = [];
 
+                                builder.alter('BPMNEdge#messageVisibleKind', function (desc) {
+                                        desc.default = 'initiating';
+                                });
 
-    it('transform BPMNDI.cmof', function(done) {
+                                builder.exportTo('resources/bpmn/json/bpmndi.json');
+                        }, done);
+                });
 
-      var builder = new Builder();
+                it('transform DI.cmof', function (done) {
 
-      builder.parse('resources/bpmn/cmof/BPMNDI.cmof', function(pkg) {
+                        var builder = new _builder2.default();
 
-        builder.cleanIDs();
-        builder.cleanAssociations();
+                        builder.parse('resources/bpmn/cmof/DI.cmof', function (pkg, cmof) {
 
-        // remove associations
-        pkg.associations = [];
+                                builder.cleanIDs();
+                                builder.cleanAssociations();
 
-        builder.alter('BPMNEdge#messageVisibleKind', function(desc) {
-          desc.default = 'initiating';
-        });
+                                pkg.xml = {
+                                        tagAlias: 'lowerCase'
+                                };
 
-        builder.exportTo('resources/bpmn/json/bpmndi.json');
-      }, done);
+                                // remove associations
+                                pkg.associations = [];
 
-    });
+                                pkg.types.push({
+                                        name: 'Extension',
+                                        properties: [{
+                                                name: 'values',
+                                                type: 'Element',
+                                                isMany: true
+                                        }]
+                                });
 
+                                builder.alter('DiagramElement', function (data) {
 
-    it('transform DI.cmof', function(done) {
+                                        data.properties.unshift({
+                                                name: 'extension',
+                                                type: 'Extension'
+                                        });
 
-      var builder = new Builder();
+                                        data.properties.unshift({
+                                                name: 'id',
+                                                type: 'String',
+                                                isAttr: true,
+                                                isId: true
+                                        });
+                                });
 
-      builder.parse('resources/bpmn/cmof/DI.cmof', function(pkg, cmof) {
+                                builder.alter('Diagram', function (data) {
+                                        data.properties.unshift({
+                                                name: 'id',
+                                                type: 'String',
+                                                isAttr: true,
+                                                isId: true
+                                        });
+                                });
 
-        builder.cleanIDs();
-        builder.cleanAssociations();
+                                builder.alter('Style', function (data) {
+                                        (data.properties = data.properties || []).unshift({
+                                                name: 'id',
+                                                type: 'String',
+                                                isAttr: true,
+                                                isId: true
+                                        });
+                                });
 
-        pkg.xml = {
-          tagAlias: 'lowerCase'
-        };
+                                builder.alter('Edge#waypoint', {
+                                        xml: { serialize: 'xsi:type' }
+                                });
 
-        // remove associations
-        pkg.associations = [];
+                                builder.exportTo('resources/bpmn/json/di.json');
+                        }, done);
+                });
 
-        pkg.types.push({
-          name: 'Extension',
-          properties: [
-            {
-              name: 'values',
-              type: 'Element',
-              isMany: true
-            }
-          ]
-        });
+                it('transform DC.cmof', function (done) {
 
-        builder.alter('DiagramElement', function(data) {
-
-          data.properties.unshift({
-            name: 'extension',
-            type: 'Extension'
-          });
-
-          data.properties.unshift({
-            name: 'id',
-            type: 'String',
-            isAttr: true,
-            isId: true
-          });
-        });
+                        var builder = new _builder2.default();
 
-        builder.alter('Diagram', function(data) {
-          data.properties.unshift({
-            name: 'id',
-            type: 'String',
-            isAttr: true,
-            isId: true
-          });
-        });
+                        builder.parse('resources/bpmn/cmof/DC.cmof', function (pkg, cmof) {
 
+                                builder.cleanIDs();
+                                builder.cleanAssociations();
 
-        builder.alter('Style', function(data) {
-          (data.properties = data.properties || []).unshift({
-            name: 'id',
-            type: 'String',
-            isAttr: true,
-            isId: true
-          });
-        });
+                                // remove associations
+                                pkg.associations = [];
 
-        builder.alter('Edge#waypoint', {
-          xml: { serialize: 'xsi:type' }
+                                builder.exportTo('resources/bpmn/json/dc.json');
+                        }, done);
+                });
         });
-
-        builder.exportTo('resources/bpmn/json/di.json');
-      }, done);
-
-    });
-
-
-    it('transform DC.cmof', function(done) {
-
-      var builder = new Builder();
-
-      builder.parse('resources/bpmn/cmof/DC.cmof', function(pkg, cmof) {
-
-        builder.cleanIDs();
-        builder.cleanAssociations();
-
-        // remove associations
-        pkg.associations = [];
-
-        builder.exportTo('resources/bpmn/json/dc.json');
-      }, done);
-
-    });
-
-  });
-
 });

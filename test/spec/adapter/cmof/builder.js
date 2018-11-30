@@ -1,17 +1,23 @@
-import {
-  assign,
-  find,
-  forEach,
-  isFunction,
-  matchPattern
-} from 'min-dash';
+'use strict';
 
-import fs from 'fs';
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = Builder;
 
-import CmofParser from 'cmof-parser';
+var _minDash = require('min-dash');
 
+var _fs = require('fs');
 
-export default function Builder() {
+var _fs2 = _interopRequireDefault(_fs);
+
+var _cmofParser = require('cmof-parser');
+
+var _cmofParser2 = _interopRequireDefault(_cmofParser);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function Builder() {
 
   var desc;
 
@@ -25,7 +31,7 @@ export default function Builder() {
   }
 
   function findProperty(properties, name) {
-    var property = find(properties, function(d) {
+    var property = (0, _minDash.find)(properties, function (d) {
       return d.name === name;
     });
 
@@ -40,7 +46,7 @@ export default function Builder() {
 
     var last;
 
-    forEach(propertyNames, function(name) {
+    (0, _minDash.forEach)(propertyNames, function (name) {
 
       var descriptor = findProperty(properties, name);
 
@@ -67,7 +73,7 @@ export default function Builder() {
     var props = desc.properties;
 
     function findProperty(name) {
-      return find(props, matchPattern({ name }));
+      return (0, _minDash.find)(props, (0, _minDash.matchPattern)({ name }));
     }
 
     var p1 = findProperty(prop1);
@@ -86,11 +92,11 @@ export default function Builder() {
 
     var str = JSON.stringify(pkg, null, '  ');
 
-    forEach(hooks.preSerialize, function(fn) {
+    (0, _minDash.forEach)(hooks.preSerialize, function (fn) {
       str = fn(str);
     });
 
-    fs.writeFileSync(file, str);
+    _fs2.default.writeFileSync(file, str);
   }
 
   function preSerialize(fn) {
@@ -98,7 +104,7 @@ export default function Builder() {
   }
 
   function rename(oldType, newType) {
-    preSerialize(function(str) {
+    preSerialize(function (str) {
       return str.replace(new RegExp(oldType, 'g'), newType);
     });
   }
@@ -116,7 +122,7 @@ export default function Builder() {
     }
 
     if (elementParts[1]) {
-      var property = find(element.properties, matchPattern({
+      var property = (0, _minDash.find)(element.properties, (0, _minDash.matchPattern)({
         name: elementParts[1]
       }));
 
@@ -124,23 +130,23 @@ export default function Builder() {
         throw new Error('[transform] property <' + elementParts[0] + '#' + elementParts[1] + '> does not exist');
       }
 
-      if (isFunction(extension)) {
+      if ((0, _minDash.isFunction)(extension)) {
         extension.call(element, property);
       } else {
-        assign(property, extension);
+        (0, _minDash.assign)(property, extension);
       }
     } else {
-      if (isFunction(extension)) {
+      if ((0, _minDash.isFunction)(extension)) {
         extension.call(element, element);
       } else {
-        assign(element, extension);
+        (0, _minDash.assign)(element, extension);
       }
     }
   }
 
   function cleanIDs() {
 
-    preSerialize(function(str) {
+    preSerialize(function (str) {
 
       // remove "id": "Something" lines
       return str.replace(/,\n\s+"id": "[^"]+"/g, '');
@@ -149,7 +155,7 @@ export default function Builder() {
 
   function cleanAssociations() {
 
-    preSerialize(function(str) {
+    preSerialize(function (str) {
 
       // remove "association": "Something" lines
       return str.replace(/,\n\s+"association": "[^"]+"/g, '');
@@ -158,7 +164,7 @@ export default function Builder() {
 
   function parse(file, postParse, done) {
 
-    new CmofParser({ clean: true }).parseFile(file, function(err, _desc) {
+    new _cmofParser2.default({ clean: true }).parseFile(file, function (err, _desc) {
       if (err) {
         done(err);
       } else {
