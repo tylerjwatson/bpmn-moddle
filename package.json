@@ -1,6 +1,6 @@
 {
   "name": "bpmn-moddle",
-  "version": "5.1.5",
+  "version": "5.1.6",
   "description": "A moddle wrapper for BPMN 2.0",
   "scripts": {
     "build": "babel -d . src",
@@ -21,7 +21,7 @@
   ],
   "author": {
     "name": "Nico Rehwaldt",
-    "url": "https://github.com/Nikku"
+    "url": "https://github.com/nikku"
   },
   "contributors": [
     {
@@ -38,7 +38,7 @@
     "eslint": "^4.11.0",
     "eslint-plugin-bpmn-io": "^0.4.1",
     "mocha": "^4.0.1",
-    "npm-run-all": "^4.1.2",
+    "npm-run-all": "^4.1.5",
     "xsd-schema-validator": "^0.5.0"
   },
   "dependencies": {
